@@ -39,36 +39,54 @@ export default function AnimatedBackground() {
     const particleCount = 100
 
     class Particle {
-      x: number
-      y: number
-      size: number
-      baseX: number
-      baseY: number
-      density: number
-      color: string
+      x: number = 0
+      y: number = 0
+      size: number = 0
+      baseX: number = 0
+      baseY: number = 0
+      density: number = 0
+      color: string = ""
+      angle: number = 0
+      velocity: number = 0
 
       constructor() {
+        const canvas = canvasRef.current
+        if (!canvas) return
+
         this.x = Math.random() * canvas.width
         this.y = Math.random() * canvas.height
-        this.size = Math.random() * 5 + 1
+        this.size = Math.random() * 3 + 2 // Slightly larger particles
         this.baseX = this.x
         this.baseY = this.y
         this.density = Math.random() * 30 + 1
+        this.angle = Math.random() * 360
+        this.velocity = Math.random() * 0.2 + 0.1
 
-        // Assign either blue or red color with random opacity
-        const isBlue = Math.random() > 0.5
-        const opacity = Math.random() * 0.5 + 0.2
-        this.color = isBlue
-          ? `rgba(59, 130, 246, ${opacity})` // Blue
-          : `rgba(239, 68, 68, ${opacity})` // Red
+        // Enhanced color palette with more vibrant colors
+        const colors = [
+          [59, 130, 246], // Blue
+          [239, 68, 68],  // Red
+          [99, 102, 241], // Indigo
+          [236, 72, 153]  // Pink
+        ]
+        const selectedColor = colors[Math.floor(Math.random() * colors.length)]
+        const opacity = Math.random() * 0.5 + 0.3
+        this.color = `rgba(${selectedColor[0]}, ${selectedColor[1]}, ${selectedColor[2]}, ${opacity})`
       }
 
       draw() {
+        const ctx = canvasRef.current?.getContext("2d")
+        if (!ctx) return
+
+        ctx.save()
         ctx.fillStyle = this.color
+        ctx.shadowColor = this.color
+        ctx.shadowBlur = 15
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
         ctx.closePath()
         ctx.fill()
+        ctx.restore()
       }
 
       update() {
@@ -77,26 +95,31 @@ export default function AnimatedBackground() {
         const dy = mouseY - this.y
         const distance = Math.sqrt(dx * dx + dy * dy)
 
+        // Add subtle organic movement
+        this.angle += this.velocity
+        const movement = Math.sin(this.angle) * 0.5
+
         if (distance < mouseRadius) {
-          // Create repulsion effect
+          // Enhanced repulsion effect with smooth easing
           const forceDirectionX = dx / distance
           const forceDirectionY = dy / distance
           const maxDistance = mouseRadius
           const force = (maxDistance - distance) / maxDistance
-          const directionX = forceDirectionX * force * this.density
-          const directionY = forceDirectionY * force * this.density
+          const easing = force * force // Quadratic easing
+          const directionX = forceDirectionX * easing * this.density * 2
+          const directionY = forceDirectionY * easing * this.density * 2
 
           this.x -= directionX
           this.y -= directionY
         } else {
-          // Return to original position
+          // Organic movement when returning to base position
           if (this.x !== this.baseX) {
             const dx = this.x - this.baseX
-            this.x -= dx / 10
+            this.x -= dx / 20 + movement
           }
           if (this.y !== this.baseY) {
             const dy = this.y - this.baseY
-            this.y -= dy / 10
+            this.y -= dy / 20 + movement
           }
         }
       }
@@ -138,25 +161,24 @@ export default function AnimatedBackground() {
           const distance = Math.sqrt(dx * dx + dy * dy)
 
           if (distance < maxDistance) {
-            // Calculate opacity based on distance
-            const opacity = 1 - distance / maxDistance
+            // Enhanced opacity calculation with smooth falloff
+            const opacity = Math.pow(1 - distance / maxDistance, 2) * 0.5
 
-            // Determine if line should be blue or red
-            const isBlue = particles[a].color.includes("130")
-            const isRed = particles[b].color.includes("68")
+            // Create more vibrant connections
+            const gradient = ctx.createLinearGradient(
+              particles[a].x,
+              particles[a].y,
+              particles[b].x,
+              particles[b].y
+            )
 
-            // Create gradient for line
-            const gradient = ctx.createLinearGradient(particles[a].x, particles[a].y, particles[b].x, particles[b].y)
+            // Extract color values for smooth transitions
+            const colorA = particles[a].color.match(/\d+/g)
+            const colorB = particles[b].color.match(/\d+/g)
 
-            if (isBlue && isRed) {
-              gradient.addColorStop(0, `rgba(59, 130, 246, ${opacity * 0.5})`)
-              gradient.addColorStop(1, `rgba(239, 68, 68, ${opacity * 0.5})`)
-            } else if (isBlue) {
-              gradient.addColorStop(0, `rgba(59, 130, 246, ${opacity * 0.5})`)
-              gradient.addColorStop(1, `rgba(59, 130, 246, ${opacity * 0.3})`)
-            } else {
-              gradient.addColorStop(0, `rgba(239, 68, 68, ${opacity * 0.5})`)
-              gradient.addColorStop(1, `rgba(239, 68, 68, ${opacity * 0.3})`)
+            if (colorA && colorB) {
+              gradient.addColorStop(0, `rgba(${colorA[0]}, ${colorA[1]}, ${colorA[2]}, ${opacity})`)
+              gradient.addColorStop(1, `rgba(${colorB[0]}, ${colorB[1]}, ${colorB[2]}, ${opacity})`)
             }
 
             ctx.strokeStyle = gradient
