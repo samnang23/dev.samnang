@@ -11,7 +11,7 @@ const projects = [
     description:
       "A feature-rich e-commerce mobile application built with Flutter and Firebase, featuring real-time inventory updates and secure payment processing.",
     image: "/placeholder.svg?height=600&width=800",
-    video: "/videos/yai_mockup2.mov", // Replace with your actual video URL
+    video: "/videos/yai_mockup.mp4", // Replace with your actual video URL
     tags: ["Flutter", "Firebase", "Stripe", "State Management"],
     links: {
       github: "https://github.com/samnangkeo/fluttershop",
